@@ -428,7 +428,7 @@ volume replace-brick: failed: Brick: glusterfs-node1:/glusterfs/replica/brick3 n
 ```
 **当硬盘坏了后，替换硬盘后并仍将新硬盘挂载在原有brick目录下，需要使用reset-brick**
 ```
-gluster volume reset-brick <VOLNAME> <SOURCE-BRICK> {{start} | {<NEW-BRICK> commit force} }
+gluster volume reset-brick <VOLNAME> <SOURCE-BRICK> {start} | {<NEW-BRICK> commit force} 
 gluster volume reset-brick VOLNAME HOSTNAME:BRICKPATH start #终止指定brick的进程，开始reset
 gluster volume reset-brick <VOLNAME> <SOURCE-BRICK> {<NEW-BRICK> commit force} #进程被kill后，使用相同brick-path替换src-brick时执行
 ```
