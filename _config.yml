@@ -16,7 +16,7 @@ timezone: Asia/Shanghai
 
 title: Wybal # the main title
 
-tagline: 运维杂谈,有笔记,有记录,写下来防止忘掉 # it will display as the subtitle
+tagline: 运维杂谈 # it will display as the subtitle
 
 description: >- # used by seo meta and the atom feed
   A minimal, responsive and feature-rich Jekyll theme for technical writing.
