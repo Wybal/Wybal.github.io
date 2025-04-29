@@ -1,10 +1,10 @@
 ---
 title: glusterfs
 date: 2025-04-29 22:26:00 +0800
-categories: [分布式存储,glusterfs]
-tags: [分布式存储]
+categories: [glusterfs]
+tags: [glusterfs]
 ---
-[toc]
+
 ### 一、glusterfs服务端部署
 初装配置
 | 主机名           |     Ip地址      |     盘符 |
