@@ -335,7 +335,7 @@ volume delete: test-replica4: success
 gluster v remove-brick <VOLNAME> [replica <COUNT>] <BRICK> ... <start|stop|status|commit|force>  
 ```
 eg：
-如果是复制卷或者条带卷，则每次移除的brick数必须是replica或者stripe的整数倍，
+如果是复制卷或者条带卷，则每次移除的brick数必须是replica或者stripe的整数倍，并属于同一subvolume
 ```
 [root@glusterfs-node1 brick]# gluster v remove-brick replica2 glusterfs-node1:/test-replica{3..4}/brick start
 [root@glusterfs-node1 brick]# gluster v remove-brick replica2 glusterfs-node1:/test-replica{3..4}/brick status
@@ -409,6 +409,7 @@ Brick2: glusterfs-node2:/glusterfs/replica/brick1
 ```
 **扩容完后最好均衡下数据，见第7节**
 如果是复制卷或者条带卷，则每次添加的Brick数必须是replica的整数倍。
+
 #### 6、替换brick
 **替换前如果故障brick或源brick有进程，需要先kill掉再进行替换**
 **使用一个新的brick替换旧的brick，2个brick路径不能一致，使用replace**
@@ -443,21 +444,24 @@ volume reset-brick: failed: When destination brick is new, please use gluster vo
 ```
 
 **openEuler替换brick**
-在服务端查看故障brick进程id，并结束该进程
-客户端卸载包含故障brick的卷
-客户端重新挂载卷到新的挂载点<客户端挂载点>
-查询故障节点的备份节点的扩展属性getfattr -d -m. -e hex BRICK
-客户端新建目录并删除
+
+* 在服务端查看故障brick进程id，并结束该进程
+* 客户端卸载包含故障brick的卷
+* 客户端重新挂载卷到新的挂载点<客户端挂载点>
+* 查询故障节点的备份节点的扩展属性getfattr -d -m. -e hex BRICK
+* 客户端新建目录并删除
    cd <客户端挂载点>
    mkdir testDir
    rm -rf testDir
-设置扩展属性触发自愈
+* 设置扩展属性触发自愈
    setfattr -n trusted.non-existent-key -v abc <客户端挂载点>
    setfattr -x trusted.non-existent-key <客户端挂载点>
-强制替换卷
+* 强制替换卷
    gluster volume replace-brick VOLUME BAD-BRICK NEW-BRICK commit force
+
 #### 7、均衡volume
 >一般add-brick扩容后才需要均衡卷
+
 当add new brick后，新的brick里面都会创建已存在的目录，但是内容为空
 当新增文件时，glusterfs会根据各个brick的剩余空间大小来决定写到那个brick里
 当新增brick后，新增brick下会同步创建以前存在的目录，但目录下为空
@@ -483,6 +487,7 @@ ID: e3116dbe-60b9-4867-8f32-8f4a37d6c23f
 ```
 2. 均衡数据，会把新旧brick下的数据进行迁移均衡,创建的新文件也会在new brick下存储
 >rebalance前
+
 ```
 [root@glusterfs-node2 replica]# gluster v info
 Brick1: glusterfs-node1:/glusterfs/replica/brick1
@@ -493,6 +498,7 @@ Brick2: glusterfs-node2:/glusterfs/replica/brick1
 2.2G	.
 ```
 >rebalance start
+
 ```
 [root@glusterfs-node1 ~]# gluster volume rebalance haxi start
 volume rebalance: haxi: success: Rebalance on haxi has been started successfully. Use rebalance status command to check status of the rebalance process.
@@ -517,6 +523,7 @@ ID: 7c67dbcf-48d1-45ee-ad64-c122f7018bb5
   Stopped rebalance process on volume test-volume
 ```
 >rebalance后
+
 ```
 [root@glusterfs-node1 brick1]# du -sh 
 801M	.
@@ -525,10 +532,11 @@ ID: 7c67dbcf-48d1-45ee-ad64-c122f7018bb5
 ```
 **设置迁移速度**
 `gluster volume set <VOLUME> rebal-throttle lazy|normal|aggressive`
+
 默认normal
-Lazy:慢速模式，较少线程迁移
-Normal：正常模式线程数量适中
-Aggressive：激进模式，较多线程迁移
+* Lazy:慢速模式，较少线程迁移
+* Normal：正常模式线程数量适中
+* Aggressive：激进模式，较多线程迁移
 **均衡前的注意事项**
 * 如果有文件损坏，先修复
 * 均衡前，确认集群没有自修复在进行否则会影响数据正确率和迁移效率
@@ -537,6 +545,7 @@ Aggressive：激进模式，较多线程迁移
 * 迁移过程中，使用status时刻查看迁移状态
 * 当集群较大时，可能会出现某个节点均衡失败的问题，一般重新开始执行均衡即可
 * 如果迁移对程序影响较大，可以只执行fix-layout，只修复目录哈希分布，不会实际迁移数据，此时新文件会存储在新节点或者brick上
+
 #### 8、限额quota
 
 开启/关闭系统配额：
@@ -569,9 +578,9 @@ Brick1: glusterfs-node1:/glusterfs/replica/brick
 Brick2: glusterfs-node2:/glusterfs/replica/brick
 Options Reconfigured:
 ---
-features.quota-deem-statfs: on 
-features.inode-quota: on
-features.quota: on
+features.quota-deem-statfs: on   #打开此设置，当执行df -h时返回的是硬限制的大小，不是volume的大小，比如设置/目录配额为1GB，volume为10GB，当打开此选项时df查看为1GB大小
+features.inode-quota: on         #inode的配额
+features.quota: on               #容量的配额
 ---
 cluster.quorum-type: auto
 transport.address-family: inet
@@ -597,8 +606,9 @@ volume quota : success
 [root@glusterfs-node2 ~]# gluster v quota replica2 list
 ```
 查看某一个目录的配额
-
-	gluster volume quota <VOLNAME> list <PATH>
+`
+gluster volume quota <VOLNAME> list <PATH>
+`
 ```
 [root@glusterfs-node2 brick]# gluster v quota replica2 list /test1
 Path                   Hard-limit  Soft-limit      Used  Available  Soft-limit exceeded? Hard-limit exceeded?
@@ -616,21 +626,27 @@ glusterfs-node1:replica2/test1  1.0G     0  1.0G   0% /opt
 gluster volume quota <VOLNAME> remove <PATH>
 ```
 当超出配额的hard-limit时，clinet端不能写
-```
+
 当超出soft-limit时，list查看Soft-limit exceeded?为yes
+```
 [root@glusterfs-node1 brick1]# gluster volume quota replica2 list 
                   Path                   Hard-limit  Soft-limit      Used  Available  Soft-limit exceeded? Hard-limit exceeded?
 -------------------------------------------------------------------------------------------------------------------------------
 /glu                                       1.0GB     80%(819.2MB)  830.0MB 194.0MB             Yes                   No
-当超出hard-limit时，list查看Soft-limit exceeded?和Hard-limit exceeded?都为yes
+```
+hard-limit时，list查看Soft-limit exceeded?和Hard-limit exceeded?都为yes
+```
 [root@glusterfs-node1 brick1]# gluster volume quota replica2 list 
                   Path                   Hard-limit  Soft-limit      Used  Available  Soft-limit exceeded? Hard-limit exceeded?
 -------------------------------------------------------------------------------------------------------------------------------
 /glu                                       1.0GB     80%(819.2MB)    1.0GB  0Bytes             Yes                  Yes
-超出配额，再继续写入，会提示已超出配额
+```
+额，再继续写入，会提示已超出配额
+```
 [root@ceph-node1 glu]# echo "123"> Kylin
 -bash: Kylin: Disk quota exceeded
 ```
+
 #### 9、配置卷及优化
 ```
 gluster volume set <VOLNAME> <KEY> <VALUE>
@@ -677,9 +693,9 @@ gluster volume set senyintvolume performance.write-behind-window-size 1024MB
     
 #### 10、gluster相关日志
 >相关日志，在`/var/log/glusterfs/`目录下，可根据需要查看；
-如`/var/log/glusterfs/brick/`下是各brick创建的日志；
-如`/var/log/glusterfs/cmd_history.log`是命令执行记录日志；
-如`/var/log/glusterfs/glusterd.log`是glusterd守护进程日志。
+>如/log/glusterfs/brick/下是各brick创建的日志；
+>如ar/log/glusterfs/cmd_history.log是命令执行记录日志；
+>如/var/log/glusterfs/glusterd.log是glusterd守护进程日志。
 
 #### 11、查看文件在节点上的位置
 在client端执行,对于包含分布式卷的节点查找文件有用
@@ -710,9 +726,9 @@ gluster volume clear-locks test-volume /file1 kind blocked posix 0,0-1
 # gluster volume clear-locks VOLNAME path kind all posix range          #清除 test-volume 上的所有 POSIX 锁
 gluster volume clear-locks test-volume /file1 kind all posix 0,0-1
 ```
-gluster volume clear-locks   “卷名”   /ksvd-orgs/org-0/users/0local/huizhan3/win7/DELTA.IMG kind granted posix
-查看锁是否开启：gluster volume get   “卷名”   lookup-optimize
-关闭锁：gluster   volume  set  “卷名”   lookup-optimize off 
+gluster volume clear-locks <volume> ksvd/in7/DELTA.IMG kind granted posix
+查看锁是否开启：gluster volume get <volume> lookup-optimize
+关闭锁：gluster volume set <volume> lookup-optimize off 
 
 ### FAQ
 #### 1、客户端挂载报错Mount failed. Please check the log file for more details.
