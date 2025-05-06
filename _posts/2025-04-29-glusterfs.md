@@ -6,12 +6,15 @@ tags: [分布式存储]
 ---
 
 ### 一、glusterfs服务端部署
+
 初装配置
+
 | 主机名           |     Ip地址      |     盘符 |
 | ---------------- | :-------------: | -------: |
 | glusterfs-node1  | 192.168.189.131 | /dev/sdb |
 | glusterfs-node2  | 192.168.189.132 | /dev/sdb |
 | glusterfs-client | 192.168.189.150 |
+
 #### 1、安装常见依赖包
 ```
 yum install -y vim net-tools ntpdate
@@ -486,6 +489,7 @@ ID: e3116dbe-60b9-4867-8f32-8f4a37d6c23f
 当rebalance后在旧目录下或者volume根目录下创建新文件，会在新的brick下存储
 ```
 2. 均衡数据，会把新旧brick下的数据进行迁移均衡,创建的新文件也会在new brick下存储
+
 >rebalance前
 
 ```
@@ -537,7 +541,9 @@ ID: 7c67dbcf-48d1-45ee-ad64-c122f7018bb5
 * Lazy:慢速模式，较少线程迁移
 * Normal：正常模式线程数量适中
 * Aggressive：激进模式，较多线程迁移
+
 **均衡前的注意事项**
+
 * 如果有文件损坏，先修复
 * 均衡前，确认集群没有自修复在进行否则会影响数据正确率和迁移效率
 * 先执行fix-layout再进行数据迁移，可以提高迁移效率
@@ -634,14 +640,14 @@ gluster volume quota <VOLNAME> remove <PATH>
 -------------------------------------------------------------------------------------------------------------------------------
 /glu                                       1.0GB     80%(819.2MB)  830.0MB 194.0MB             Yes                   No
 ```
-hard-limit时，list查看Soft-limit exceeded?和Hard-limit exceeded?都为yes
+当超出shard-limit时，list查看Soft-limit exceeded?和Hard-limit exceeded?都为yes
 ```
 [root@glusterfs-node1 brick1]# gluster volume quota replica2 list 
                   Path                   Hard-limit  Soft-limit      Used  Available  Soft-limit exceeded? Hard-limit exceeded?
 -------------------------------------------------------------------------------------------------------------------------------
 /glu                                       1.0GB     80%(819.2MB)    1.0GB  0Bytes             Yes                  Yes
 ```
-额，再继续写入，会提示已超出配额
+当超出配额，客户端再继续写入，会提示已超出配额
 ```
 [root@ceph-node1 glu]# echo "123"> Kylin
 -bash: Kylin: Disk quota exceeded
@@ -693,8 +699,11 @@ gluster volume set senyintvolume performance.write-behind-window-size 1024MB
     
 #### 10、gluster相关日志
 >相关日志，在`/var/log/glusterfs/`目录下，可根据需要查看；
+
 >如/log/glusterfs/brick/下是各brick创建的日志；
+
 >如ar/log/glusterfs/cmd_history.log是命令执行记录日志；
+
 >如/var/log/glusterfs/glusterd.log是glusterd守护进程日志。
 
 #### 11、查看文件在节点上的位置
@@ -727,7 +736,9 @@ gluster volume clear-locks test-volume /file1 kind blocked posix 0,0-1
 gluster volume clear-locks test-volume /file1 kind all posix 0,0-1
 ```
 gluster volume clear-locks <volume> ksvd/in7/DELTA.IMG kind granted posix
+
 查看锁是否开启：gluster volume get <volume> lookup-optimize
+
 关闭锁：gluster volume set <volume> lookup-optimize off 
 
 ### FAQ
