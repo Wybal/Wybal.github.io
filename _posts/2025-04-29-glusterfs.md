@@ -673,7 +673,7 @@ gluster volume set senyintvolume cluster.daemon-log-level INFO
 gluster volume set senyintvolume performance.write-behind-window-size 1024MB
 
 5. 设置 cluster.quorum-type, 默认none
-   none|auto|fixed,none:关闭，auto：半数以上写入成功才会返回写入成功，fixed：大于等于cluster.quorum-count设置的数量写入成功才会返回
+   none|auto|fixed,none:关闭，auto：半数以上才允许写入，fixed：大于等于cluster.quorum-count设置的数量才允许写入
    cluster.server-quorum-type，默认off。百分比值，可以调节，一般设置50%以上，当集群不满足server-quorum时整个集群不可用
 
 6. 设置 cluster.favorite-child-policy, 默认为none
