@@ -63,11 +63,17 @@ index heal的触发条件
 4. client 访问脑裂文件
 
 常见脑裂修复命令
+
 gluster v heal \<volume\>                  触发器为需要修复的文件索引自修复
+
 gluster v heal \<volume\> info             查看待修复的文件
+
 gluster v heal \<volume\> info split-brain 查看需要处于脑裂状态的文件，需要手动干预进行修复
-gluster v heal \<volume\> full             触发所有文件的自我修复。直接从建康的brick拷贝数据到被修复的brick，只是进行full-heal修复
+
+gluster v heal \<volume\> full             触发所有文件的自我修复。时间较长
+
 gluster v heal \<volume\> statistics       文件修复统计信息
+
 gluster v heal \<volume\> statistics heal-count 需要修复的文件数量
 
 #### 0、glusterfs的写入流程
@@ -87,11 +93,17 @@ gluster v heal \<volume\> statistics heal-count 需要修复的文件数量
 >文件写入changelog变化示意图
 
 ![alt text](../assets/images/image-4.png)
+
 Pre-OP前
+
 ![pre-op](../assets/images/image-5.png)
+
 数据写入中
+
 ![数据写入中](../assets/images/image-6.png)
+
 写入成功
+
 ![alt text](../assets/images/image-7.png)
 
 数据写入Transaction完成后根据扩展属性changelog，文件存在以下几种状态：
@@ -230,19 +242,26 @@ gfs/brick-a/a:
 
     修改trusted.afr.vol-client-1的0x000003d70000000100000000为0x000003d70000000000000000 
     /gfs/brick-a/a认为/gfs/brick-b/a的metadata是正确的，将中间8位修改为0
+
 设置gfs/brick-a/a的xattr权限如下:
+
 ```shell
 setfattr -n trusted.afr.vol-client-1 -v 0x000003d70000000000000000 /gfs/brick-a/a
 ```
+
 gfs/brick-b/a:
 
     修改trusted.afr.vol-client-0的0x000003b00000000100000000为0x000000000000000100000000 
     /gfs/brick-b/a认为/gfs/brick-a/a的data是正确的，将前8位修改为0
+
 设置gfs/brick-b/a的xattr权限如下:
+
 ```shell
 setfattr -n trusted.afr.vol-client-0 -v 0x000000000000000100000000 /gfs/brick-b/a
 ```
+
 完成上述操作后，查看xattr权限如下所示：
+
 ```shell
 [root@pranithk-laptop vol]# getfattr -d -m . -e hex /gfs/brick-?/a
 getfattr: Removing leading '/' from absolute path names
@@ -268,6 +287,7 @@ client执行以触发愈合。
 设置以后直接生效，并开始
 `cluster.favorite-child-policy`
 查看help
+
 ```
 [root@glusterfs-node2 brick]# gluster v set help  | grep -A3 cluster.favorite-child-policy
 Option: cluster.favorite-child-policy
