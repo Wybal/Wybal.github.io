@@ -10,7 +10,7 @@ tags: [分布式存储]
 
 >脑裂：
 
-裂脑是指文件的两个或多个复制副本变得不同的情况。当文件处于裂脑状态时，副本砖块中文件的数据或元数据不一致，并且没有足够的信息来权威地选择原始副本并修复坏副本，尽管所有砖块都已启动并联机。对于目录，还有一个条目拆分大脑，其中的文件可以在副本的砖块上具有不同的 gfid/文件类型。发生裂脑主要是因为两个原因：
+裂脑是指文件的两个或多个复制副本变得不同的情况。当文件处于裂脑状态时，副本brick中文件的数据或元数据不一致，并且没有足够的信息来权威地选择原始副本并修复坏副本，尽管所有brick都已启动并联机。对于目录，还有一个条目拆分大脑，其中的文件可以在副本的brick上具有不同的 gfid/文件类型。发生裂脑主要是因为两个原因：
 
 * 由于网络断开连接，客户端暂时失去与brick的连接。
   
@@ -92,19 +92,19 @@ gluster v heal \<volume\> statistics heal-count 需要修复的文件数量
 17-24位是目录项(entry)changelog
 >文件写入changelog变化示意图
 
-![alt text](../assets/images/image-4.png)
+![alt text](/assets/images/image-4.png)
 
 Pre-OP前
 
-![pre-op](../assets/images/image-5.png)
+![pre-op](/assets/images/image-5.png)
 
 数据写入中
 
-![数据写入中](../assets/images/image-6.png)
+![数据写入中](/assets/images/image-6.png)
 
 写入成功
 
-![alt text](../assets/images/image-7.png)
+![alt text](/assets/images/image-7.png)
 
 数据写入Transaction完成后根据扩展属性changelog，文件存在以下几种状态：
 - WISE – 自身changelog全零，其他副本changelog非零
@@ -194,7 +194,7 @@ b） 确定从客户端执行的文件操作不断失败并出现输入/输出�
 
 ###### 3、确定正确的副本
 
-这是通过观察文件的 afr 更改日志扩展属性来完成的 使用 getfattr 命令的砖块;然后确定裂脑的类型 （数据裂脑、元数据裂脑、条目裂脑或裂脑由于 GFID-不匹配）;最后确定哪个砖块包含“好副本” 的文件。
+这是通过观察文件的 afr 更改日志扩展属性来完成的 使用 getfattr 命令的brick;然后确定裂脑的类型 （数据裂脑、元数据裂脑、条目裂脑或裂脑由于 GFID-不匹配）;最后确定哪个brick包含“好副本” 的文件。
 也可能一个砖可能包含正确的数据，而 其他可能包含正确的元数据。getfattr -d -m . -e hex \<file-path-on-brick\>
 
     0x 000003d7 00000001 00000000
