@@ -168,18 +168,18 @@ yum install -y nfs-ganesha nfs-ganesha-gluster
 EXPORT
 {
 	Export_Id=1 ;
-	Path = "/glu";				//指定nfs共享目录的位置，该目录必须存在，客户端挂载使用的就是glusterfs volume下的该目录，配额对nfs挂载不生效，
-	Pseudo = "/glu-pseudo";
-	Disable_ACL =True;
-	Protocols = "3","4";
-	Access_Type = RW;
-	Squash = No_root_squash;
+	Path = "/glu";			   #指定nfs共享目录的位置，该目录在volume中必须存在，客户端挂载使用的就是glusterfs volume下的该目录
+	Pseudo = "/glu-pseudo"; #共享给nfs客户端的虚拟目录
+	Disable_ACL =True;      #是否禁用ACL
+	Protocols = "3","4";    #nfs协议版本号
+	Access_Type = RW;       #访问权限类型，rw，ro
+	Squash = root_squash;   #客户端访问时是否匿名,所有用户不匿名（no_squash），root用户匿名（root_squash），所有用户匿名（all_squash）
 	Sectype="sys";
 	Transports = "UDP","TCP";
-	FSAL {						//定义的是准备导出的gluster的volume
-		Name = "GLUSTER";		//是应该导出卷的卷格式GLUSTER
-		Hostname="glusterfs-node1";	//是主机名 ，不同主机是不同的
-		Volume = "replica2";			//是gluster的卷名
+	FSAL {						#定义的是准备导出的gluster的volume
+		Name = "GLUSTER";		#是应该导出卷的卷格式GLUSTER
+		Hostname="glusterfs-node1";	#是主机名 ，不同主机是不同的
+		Volume = "replica2";	#是gluster的volume名
 	}
 }
 ```
@@ -189,7 +189,7 @@ EXPORT
 ```
 [root@glusterfs-client ~]# df -h
 glusterfs-node2:/replica2  5.0G  584M  4.5G  12% /media
-[root@glusterfs-client ~]# mkdir glu
+[root@glusterfs-client ~]# mkdir /media/glu
 [root@glusterfs-client ~]# ls -l /media/
 drwxr-xr-x 2 root root         6 Aug 14 16:31 glu
 ```
@@ -200,11 +200,11 @@ drwxr-xr-x 2 root root         6 Aug 14 16:31 glu
 ```
 [root@glusterfs-client nfs]# showmount -e glusterfs-node1
 Export list for glusterfs-node1:
-/glu (everyone)
+//glu-pseudo (everyone)
 ```
-进行挂载
+使用暴露的虚拟目录进行挂载
 ```
-[root@glusterfs-client ~]# mount.nfs 192.168.189.131:/glu /nfs/  
+[root@glusterfs-client ~]# mount.nfs 192.168.189.131:/glu-pseudo /nfs/  
 [root@glusterfs-client ~]# df -h
 Filesystem                 Size  Used Avail Use% Mounted on
 192.168.189.131:/glu       5.0G  583M  4.5G  12% /nfs
@@ -425,7 +425,7 @@ gluster volume replace-brick <VOLNAME> <SOURCE-BRICK> <NEW-BRICK> {commit force}
 gluster volume replace-brick replica2 192.168.189.132:/gluster1/brick1 192.168.189.132:/gluster/brick1 commit force
 迁移完成后，源brick就不会再存储新写入的数据
 ```
-当dest-brick和src-brick路径一致时，使用replace会failed，此时应使用reset-brick
+当dest-brick和src-brick路径一致时，使用replace会failed，此时应使用reset-brick，如果此时使用replace-brick会报错，如下：
 ```
 $ gluster v replace-brick replica2 glusterfs-node1:/glusterfs/replica/brick3 glusterfs-node1:/glusterfs/replica/brick3 commit force
 volume replace-brick: failed: Brick: glusterfs-node1:/glusterfs/replica/brick3 not available. Brick may be containing or be contained by an existing brick
@@ -584,7 +584,7 @@ Brick1: glusterfs-node1:/glusterfs/replica/brick
 Brick2: glusterfs-node2:/glusterfs/replica/brick
 Options Reconfigured:
 ---
-features.quota-deem-statfs: on   #打开此设置，当执行df -h时返回的是硬限制的大小，不是volume的大小，比如设置/目录配额为1GB，volume为10GB，当打开此选项时df查看为1GB大小
+features.quota-deem-statfs: on   #打开此设置，当执行df -h时返回的是硬限制的大小，而不是volume的大小，比如设置/目录配额为1GB，volume为10GB，当打开此选项时df查看为1GB大小
 features.inode-quota: on         #inode的配额
 features.quota: on               #容量的配额
 ---

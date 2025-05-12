@@ -34,10 +34,10 @@ include /etc/logrotate.d
 
 # no packages own wtmp and btmp -- we'll rotate them here
 /var/log/wtmp {
-    monthly			#每月执行一次转储
-    create 0664 root utmp		#创建空文件，权限是664，属主属组
-	minsize 1M		#日志大小超过1M才转储，否则跳过
-    rotate 1		#rotate时，只保留一份rotate文件
+    monthly			        #每月执行一次转储
+    create 0664 root utmp   #创建空文件时权限是664，属主root，属组utmp
+	minsize 1M		        #日志大小超过1M才转储，否则跳过
+    rotate 1		        #rotate时，只保留一份rotate历史文件。这里会保存2份日志
 }
 
 /var/log/btmp {
