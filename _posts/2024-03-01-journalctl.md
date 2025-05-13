@@ -1,6 +1,6 @@
 ---
 title: journalctl
-date: 2025-05-07 22:34:00 +0800
+date: 2024-03-05 22:34:00 +0800
 categories: [linux,系统运维,journalctl]
 tags: [linux,journalctl]
 ---

@@ -1,6 +1,6 @@
 ---
 title: logrotate
-date: 2025-05-07 22:34:00 +0800
+date: 2024-03-02 22:34:00 +0800
 categories: [linux,系统运维,logrotate]
 tags: [linux,logrotate]
 ---
