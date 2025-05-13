@@ -49,14 +49,14 @@ $ runc delete mycontainerid
 ### 2、container，和cri-o，dockershim
 CRI（容器运行时接口）是 Kubernetes 用来控制创建和管理容器的不同运行时的 API，它使 Kubernetes 更容易使用不同的容器运行时。它是一个插件接口，这意味着任何符合该标准实现的容器运行时都可以被 Kubernetes 所使用。
 Kubernetes 项目不必手动添加对每个运行时的支持，CRI API 描述了 Kubernetes 如何与每个运行时进行交互，由运行时决定如何实际管理容器，因此只要它遵守 CRI 的 API 即可。
-![Alt text](images/image-3.png)
+![Alt text](/assets/images/image-3-runc.png)
 在早期的 Kubernetes 中包括一个名为 dockershim 的组件，使它能够支持 Docker。但 Docker 由于比 Kubernetes 更早，没有实现 CRI，所以这就是 dockershim 存在的原因，它支持将 Docker 被硬编码到 Kubernetes 中。从 Kubernetes 1.24 中已经完全移除dockershim组件。
 
 container、cri-o都是遵循CRI的容器运行时，也是High-Level容器运行时，不是`真正意义`的容器运行时，将容器运行的实现交给了runc
 
 既然runc就可以实现容器的启动，停止，重启，运行...操作，为什么还需要containerd，cri-o...这类所谓的High-Level容器运行时呢？
 runc只是一个命令行工具，containerd是一个守护进程，runc的实例不能超过底层容器进程。通常它在create调用时开始它的生命，然后只是在容器的 rootfs 中的指定文件去运行。containerd 可以管理超过数千个runc容器。它更像是一个服务器，它侦听传入请求以启动、停止或报告容器的状态。在引擎盖下containerd使用runC。然而，containerd不仅仅是一个容器生命周期管理器。它还负责镜像管理（从注册中心拉取和推送镜像，在本地存储镜像等）、跨容器网络管理和其他一些功能。
-![Alt text](images/image.png)
+![Alt text](/assets/images/image-runc.png)
 containerd主要负责以下功能：
 1. 管理容器的生命周期（从创建容器到销毁容器）
 2. 拉取/推送容器镜像
@@ -64,10 +64,10 @@ containerd主要负责以下功能：
 4. 调用 runc 运行容器（与 runc 等容器运行时交互）
 5. 管理容器网络接口及网络
 
-![Alt text](images/image.jpg)
+![Alt text](/assets/images/image-runc.jpg)
 上图是 Containerd 整体的架构。构筑在 Containerd 组件之上以及跟这些组件做交互的都是 Containerd 的 client，Kubernetes 跟 Containerd 通过 CRI 做交互时，本身也作为 Containerd 的一个 client。Containerd 本身有提供了一个 CRI，叫 ctr；在这些clinet上面就是Google Cloud、Docker、IBM、阿里云、等容器云平台
 从 k8s 的角度看，选择 containerd作为运行时的组件，它调用链更短，组件更少，更稳定，占用节点资源更少。
-![Alt text](images/image-1.png)
+![Alt text](/assets/images/image-1-runc.png)
 
 ### 3、docker
 Docker 于 2013 年发布，解决了开发人员在端到端运行容器时遇到的许多问题。这里是他包含的所有东西：
@@ -79,7 +79,7 @@ Docker 于 2013 年发布，解决了开发人员在端到端运行容器时遇�
 一种共享容器镜像的方法（docker push/pull）；
 一种运行容器的方式（docker run）；
 当时，Docker 是一个单体系统。但是，这些功能中没有一个是真正相互依赖的。这些中的每一个都可以在可以一起使用的更小、更集中的工具中实现。每个工具都可以通过使用一种通用格式、一种容器标准来协同工作。从 Docker 1.11 之后，Docker Daemon 被分成了多个模块以适应 OCI 标准。拆分之后，结构分成了以下几个部分。
-![Alt text](images/image-2.png)
+![Alt text](/assets/images/image-2-runc.png)
 其中，containerd 独立负责容器运行时和生命周期（如创建、启动、停止、中止、信号处理、删除等），其他一些如镜像构建、卷管理、日志等由 Docker Daemon 的其他模块处理。
 Docker 自己在内部使用 containerd，当你安装 Docker 时也会安装 containerd
 >现在创建一个docker容器的时候，Docker Daemon 并不能直接帮我们创建了，而是请求 containerd 来创建一个容器。当containerd 收到请求后，也不会直接去操作容器，而是创建一个叫做 containerd-shim 的进程。让这个进程去操作容器，我们指定容器进程是需要一个父进程来做状态收集、维持 stdin 等 fd 打开等工作的，假如这个父进程就是 containerd，那如果 containerd 挂掉的话，整个宿主机上所有的容器都得退出了，而引入 containerd-shim 这个垫片就可以来规避这个问题了，就是提供的live-restore的功能。这里需要注意systemd的
