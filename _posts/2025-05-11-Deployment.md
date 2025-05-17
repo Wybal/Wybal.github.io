@@ -3,6 +3,7 @@ title: Deployment
 date: 2025-05-11 22:34:00 +0800
 categories: [k8s,Deployment]
 tags: [k8s,Deployment]
+toc: true
 ---
 
 Deployment 实现了k8s中一个非常重要的功能：Pod 的“水平扩展 / 收缩”（horizontal scaling out/in）

@@ -3,7 +3,7 @@ title: nodename、nodeSeletor、Taint与Toleration、Affinity
 date: 2025-05-13 22:34:00 +0800
 categories: [k8s,nodename,nodeSeletor,Taint与Toleration,Affinity]
 tags: [k8s,nodename,nodeSeletor,Taint与Toleration,Affinity]
-[toc]
+toc: true
 ---
 
 

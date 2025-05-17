@@ -3,7 +3,7 @@ title: Label&Selector
 date: 2025-05-13 22:34:00 +0800
 categories: [k8s,Label,Selector]
 tags: [k8s,Label,Selector]
-[toc]
+toc: true
 ---
 
 Label：对k8s中各种资源进行分类、分组，添加一个具有特别属性的一个标签。
