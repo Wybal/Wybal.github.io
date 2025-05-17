@@ -4,6 +4,7 @@ date: 2025-04-29 22:26:00 +0800
 categories: [分布式存储,glusterfs]
 tags: [分布式存储]
 pin: true 
+[toc]
 ---
 
 ### 一、glusterfs服务端部署

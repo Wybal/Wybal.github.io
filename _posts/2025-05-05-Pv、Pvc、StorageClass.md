@@ -3,6 +3,7 @@ title: Pv、Pvc、StorageClass
 date: 2025-05-05 22:41:00 +0800
 categories: [k8s,Pv,Pvc,StorageClass]
 tags: [k8s,Pv,Pvc,StorageClass]
+[toc]
 ---
 
 **关于namespace**
