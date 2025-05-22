@@ -596,7 +596,7 @@ Sun Oct  8 16:53:55 CST 2023
 
 ```
 
-#### example3,每个brick下都有最新的mtime文件，使用latest-mtime修复
+#### example3, 每个brick下都有最新的mtime文件，使用latest-mtime修复
 
 >这种情况下会统一按照指定目录的latest-mtime去修复，不会检查目录下的文件的mtime是否为最新，即使目录的mtime是最新但下面的文件的mtime不是最新的，也会统一按照这个目录为源对其他brick进行内容替换，所以使用latest-mtime进行修复时，直接指定目录，可能会导致修复后的文件不是最新内容，导致丢失数据
 cluster.favorite-child-policy为mtime也会有这样的问题
@@ -692,7 +692,7 @@ Mon Oct  9 23:52:17 CST 2024
 1900
 ```
 
-#### example4,从挂载点（client）修复脑裂
+#### example4, 从挂载点（client）修复脑裂
 
 提供了一组 getfattr 和 setfattr 命令来检测文件的数据和元数据裂脑状态，并从挂载点解析裂脑（如果有）。
 ```
