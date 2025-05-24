@@ -179,6 +179,7 @@ Tolerations:
 ```
 
 * 方式一:完全匹配
+
 ```shell
 此时taint和toleration的k，v，effect要完全相等，任意一个不匹配就不能容忍
 tolerations:
@@ -189,6 +190,7 @@ tolerations:
 ```
 
 * 方式二:不完全匹配
+
 ```shell
 注意不完全匹配，设置可以是一个可以是俩个，由自己定义比如的tolerations只配置了key和effect,则只匹配key，effect
 tolerations:
@@ -198,6 +200,7 @@ tolerations:
 ```
 
 * 方式三:大范围匹配（不推荐key为内置Taint）
+
 ```shell
 此时只匹配key
 tolerations:
@@ -210,6 +213,7 @@ tolerations:
 ```
 
 * 方式四:匹配所有（不推荐）
+
 ```shell
 表示匹配所有污点，不管什么污点都匹配。在k8s中的daemonsets资源默认情况下是容忍所有污点的
 tolerations:

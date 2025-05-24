@@ -22,7 +22,7 @@ sudo sed -i '/Storage/ c\Storage=persistent' /etc/systemd/journald.conf
 ```
 重启 systemd-journald，如下所示。
 ```
-$ sudo systemctl restart systemd-journald
+sudo systemctl restart systemd-journald
 ```
 更改文件权限，如下图所示。
 ```
@@ -52,93 +52,95 @@ sudo chown -R root:systemd-journal /var/log/journal
   * -U, -until= : 根据结束时间过滤日志。
 
   * -disk-usage：显示当前所有日志文件的磁盘使用情况。
+
+
 ### 4、读取日志
 ##### 1）显示日志的全部内容
 ```
-$ sudo journalctl
+sudo journalctl
 ```
 ##### 2）显示日志的详细内容
 ```
-$ sudo journalctl -o verbose
+sudo journalctl -o verbose
 ```
 ##### 3）倒序显示日志的全部内容，先显示最近的日志
 ```
-$ sudo journalctl -r
+sudo journalctl -r
 ```
 ##### 4）只显示最近的`n`行日志，默认为10行
 ```
-$ sudo journalctl -n 20
+sudo journalctl -n 20
 ```
 ##### 5）实时显示日志，类似`tail -f`
 ```
-$ sudo journalctl -f
+sudo journalctl -f
 ```
 ### 5、过滤日志
 ##### 1）只显示内核日志
 ```
-$ sudo journalctl -k
+sudo journalctl -k
 ```
 或者
 ```
-$ sudo journalctl _TRANSPORT=kernel
+sudo journalctl _TRANSPORT=kernel
 ```
 ##### 2）过滤查看指定的启动会话日志，0为最新
 ```
 $ sudo journalctl --list-boots
 -1 da83e3310bec400784d945306ecf234b Wed 2023-06-28 08:41:49 CST—Wed 2023-06-28 10:44:56 CST
  0 e2c85c77f9ae4b55ac4bf280a3f84059 Wed 2023-06-28 10:45:04 CST—Wed 2023-06-28 10:45:52 CST
- ```
+```
 
 ###### a) 过滤查看指定的启动会话日志
    
- ```
-$ sudo journalctl -b -1
- ```
+```
+sudo journalctl -b -1
+```
   或
- ```
+```
 sudo journalctl -b e2c85c77f9ae4b55ac4bf280a3f84059
- ```
+```
 ###### b)  过滤查看当前启动的日志
- ```
-$ sudo journalctl -b
- ```
+```
+sudo journalctl -b
+```
 ##### 3）过滤指定时间的日志
 日志日志可以根据时间间隔进行过滤。时间过滤器可以使用多个参数，如下所示。要使用时间过滤器，请使用`-S或-since`和`-U或-until`命令行开关。
 
 要过滤从昨天开始的日志，运行以下命令。
- ```
- $ sudo journalctl -S yesterday
- ```
+```
+sudo journalctl -S yesterday
+```
 要只过滤今天的日志，运行下面的命令（我们可以使用'today'或'00:00'，两者相同）。
- ```
-$ sudo journalctl -S today
- ```
+```
+sudo journalctl -S today
+```
 或
- ```
-$ sudo journalctl -S 00:00
- ```
+```
+sudo journalctl -S 00:00
+```
 如果只过滤昨天的日志，请执行以下命令。
- ```
-$ sudo journalctl --since yesterday --until 00:00
- ```
+```
+sudo journalctl --since yesterday --until 00:00
+```
 要过滤3月12日以来的日志，请执行以下命令。
- ```
-$ sudo journalctl -S 2021-03-12
- ```
+```
+sudo journalctl -S 2021-03-12
+```
 要用日期和时间过滤日志，请运行以下命令。
 
 注意，"日期和时间 "使用以下格式，"年-月-日 "和 "小时:分钟:秒"。
- ```
-$ sudo journalctl --since "2021-03-11 20:10:00" --until "2021-03-15"
- ```
+```
+sudo journalctl --since "2021-03-11 20:10:00" --until "2021-03-15"
+```
 要过滤最近一小时内的消息，请使用以下命令。
- ```
-$ sudo journalctl -S -1h
- ```
+```
+sudo journalctl -S -1h
+```
 ##### 4）按日志级别过滤
 `PRIORITY=6和-p 6`选择对应的过滤日志级别
 可以通过-F选项来查看某个字段的可选值：
- ```
+```
 [root@node1 ~]# journalctl -F PRIORITY
 4
 5
@@ -146,7 +148,7 @@ $ sudo journalctl -S -1h
 6
 2
 7
- ```
+```
 可以指定的优先级如下：
 1. emerg
 2. alert
@@ -157,76 +159,76 @@ $ sudo journalctl -S -1h
 7. debug
    
 要过滤内核的`err`日志
- ```
-$ sudo journalctl -p 3 -k
- ```
+```
+sudo journalctl -p 3 -k
+```
 或者
- ```
-$ sudo journalctl -p err -k
- ```
+```
+sudo journalctl -p err -k
+```
 ##### 5）基于字段的过滤
 日志日志可以通过特定字段进行过滤。需要匹配的字段的语法是`FIELD_NAME=MATCHED_VALUE`，如`_SYSTEMD_UNIT=network.service`。同时，您也可以在一个查询中指定多个匹配项，以更方便地过滤输出信息。
 常见的匹配字段：`MESSAGE`、`MESSAGE_ID`、`_PID`、`_UID`、`_HOSTNAME`、`_SYSTEMD_UNIT`
 ###### a) 按服务过滤
 要显示指定服务产生的消息，使用下面的命令。同样，你也可以过滤任何服务信息。要查看可用的服务日志，输入 "journalctl -u"，然后按TAB键两次。
- ```
-$ sudo journalctl -u httpd
- ```
+```
+sudo journalctl -u httpd
+```
  或
- ```
-$ sudo journalctl -u httpd.service
- ```
+```
+sudo journalctl -u httpd.service
+```
 或
- ```
-$ sudo journalctl _SYSTEMD_UNIT=httpd.service
- ```
+```
+sudo journalctl _SYSTEMD_UNIT=httpd.service
+```
 ###### b) 根据UID、GID和PID过滤日志
 
 要显示特定进程ID产生的消息，运行以下命令。
- ```
-$ sudo journalctl _PID=1039
- ```
+```
+sudo journalctl _PID=1039
+```
 要显示特定用户ID产生的消息，运行以下命令。
- ```
-$ sudo journalctl _UID=1021
- ```
+```
+sudo journalctl _UID=1021
+```
 要显示特定组ID产生的消息，运行以下命令。
- ```
-$ sudo journalctl _GID=1050
- ```
+```
+sudo journalctl _GID=1050
+```
 ###### c) 按文件路径过滤
 
 可以根据运行进程的文件路径进行过滤，如下图所示。
- ```
-$ sudo journalctl /usr/bin/gnome-shell
- ```
+```
+sudo journalctl /usr/bin/gnome-shell
+```
 ###### d) 按设备路径过滤
 
 要过滤与特定设备相关的消息，请运行以下命令：。
- ```
-$ sudo journalctl /dev/sda
- ```
+```
+sudo journalctl /dev/sda
+```
   
 ##### 6)过滤器可以同时应用于多个字段
 ###### a)只显示`httpd`服务且`pid=1500`的日志。
- ```
-$ sudo journalctl -u httpd  _PID=1500
- ```
+```
+sudo journalctl -u httpd  _PID=1500
+```
 ###### b)显示`Apache`服务进程的所有日志和`MySQL`服务的所有日志。
- ```
-$ journalctl -u nginx.service -u php-fpm.service
- ```
+```
+journalctl -u nginx.service -u php-fpm.service
+```
  
 ###### c)实际的使用中更常见的用例是同时应用 match 和时间条件，比如要过滤出`2018年3月27日0点到1点`这个时间段中 `cron` 服务的日志记录：
- ```
-$ sudo journalctl -u cron --since "2018-03-27" --until "2018-03-27 01:00"
- ```
+```
+sudo journalctl -u cron --since "2018-03-27" --until "2018-03-27 01:00"
+```
 ### 5、检查所有日志文件的磁盘使用情况
 当你为日志启用持久化存储时，它最多使用`/var/log/journal`所在文件系统的`10%`。
 
 要查看日志文件使用了多少存储空间，请运行以下命令。
- ```
-$ sudo journalctl --disk-usage
+```
+sudo journalctl --disk-usage
 Archived and active journals take up 424.0M on disk.
 ```
 ### 6、控制输出
@@ -234,7 +236,7 @@ Archived and active journals take up 424.0M on disk.
 
 默认情况下，`journalctl` 会在 `pager` 内显示输出结果。如果大家希望利用文本操作工具对数据进行处理，则需要使用标准输出。在这种情况下，我们需要使用 `--no-pager` 选项。
 ```
-$ sudo journalctl --no-pager
+sudo journalctl --no-pager
 ```
 这样就可以把结果重定向到我们需要的地方(一般是磁盘文件或者是文本工具)。
 
@@ -245,44 +247,26 @@ $ sudo journalctl --no-pager
 `short`
 
 这是默认的格式，即经典的 syslog 输出格式。
-`
-short-iso
-`
+`short-iso`
 与 short 类似，强调 ISO 8601 时间戳。
-`
-short-precise
-`
+`short-precise`
 与 short 类似，提供微秒级精度。
-`
-short-monotonic
-`
+`short-monotonic`
 与 short 类似，强调普通时间戳。
-`
-verbose
-`
+`verbose`
 显示全部字段，包括通常被内部隐藏的字段。
-`
-export
-`
+`export`
 适合传输或备份的二进制格式。
-`
-json
-`
+`json`
 标准 json 格式，每行一条记录。
-`
-json-pretty
-`
+`json-pretty`
 适合阅读的 json 格式。
-`
-json-sse
-`
+`json-sse`
 经过包装可以兼容 server-sent 事件的 json 格式。
-`
-cat
-`
+`cat`
 只显示信息字段本身。
 
 比如我们要以 json 格式输出 `cron.service `的最后一条日志：
-```
-$ sudo journalctl -u cron.service -n 1 --no-pager -o json
+```shell
+sudo journalctl -u cron.service -n 1 --no-pager -o json
 ```
