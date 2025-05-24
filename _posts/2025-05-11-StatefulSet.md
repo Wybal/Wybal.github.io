@@ -68,7 +68,7 @@ spec:                       #必须，定义控制器信息
     对于包含 N 个 副本的 StatefulSet，当部署 Pod 时，它们是依次创建的，顺序为 0..N-1。 
     当缩容、删除、更新 Pod 时，它们是逆序的，顺序为 N-1..0。
     在将操作应用到 Pod 之前，它前面的所有 Pod 必须是 Running 和 Ready 状态。否则会暂停新的pod的操作
-```
+```shell
 [root@k8smaster statefulset]# kubectl get svc
 NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
 kubernetes   ClusterIP   10.1.0.1     <none>        443/TCP   25h
@@ -82,11 +82,11 @@ web-0      1/1     Running   0          100m   10.244.1.20   k8snode1   <none>  
 web-1      1/1     Running   0          100m   10.244.2.25   k8snode2   <none>           <none>
 ```
 创建一个一次性的pod，--rm意味pod退出就会被删除
-```
+```shell
 [root@k8smaster statefulset]# kubectl run -it --image centos:7 dns-test --restart=Never --rm /bin/bash
 ```
 使用nslookup解析就可以解析到对应pod的ip地址
-```
+```shell
 [root@dns-test yum.repos.d]# nslookup web-0.nginx.default.svc.cluster.local
 Server:		10.1.0.10
 Address:	10.1.0.10#53
@@ -103,18 +103,20 @@ Address: 10.244.2.25
 ```
 ##### 1、StatefulSet的扩缩
 将app=nginx的2个pod删掉
-```
+```shell
 [root@k8smaster statefulset]# kubectl delete pod -l app=nginx
 pod "web-0" deleted
 pod "web-1" deleted
 ```
 查看新创建的两个pod，k8s为它们分配了和原来一样的网络身份”web-0.nginx"和”web-1.nginx“
-```
+```shell
 [root@k8smaster statefulset]# kubectl get pod -w -l app=nginx
 NAME    READY   STATUS    RESTARTS   AGE
 web-0   1/1     Running   0          65s
 web-1   1/1     Running   0          62s
+```
 当只删掉web-0的pod
+```shell
 [root@k8smaster statefulset]# kubectl delete pod web-0
 pod "web-0" deleted
 [root@k8smaster statefulset]# kubectl get pod -w -l app=nginx
@@ -198,44 +200,57 @@ spec:
           storage: 1Gi
 ```
 创建这个pv
+```shell
 [root@k8smaster volume]# kubectl create -f pv.yml 
 persistentvolume/pv-test created
 [root@k8smaster volume]# kubectl get pv
 NAME      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   REASON   AGE
 pv-test   1Gi        RWO            Recycle          Available           manual                  4s
+```
 创建sts.yml配置的这个pod
+```shell
 [root@k8smaster volume]# kubectl create -f sts.yml 
 statefulset.apps/web1 created
+```
 查看pvc和pv的bound关系
+```shell
 [root@k8smaster volume]# kubectl get pvc
 NAME         STATUS    VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   AGE
 www-web1-0   Bound     pv-test   1Gi        RWO            manual         34m
 www-web1-1   Pending                                       manual         34m
+```
 查看创建的pod的状态
+```shell
 [root@k8smaster volume]# kubectl get pods -o wide
 NAME     READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
 web1-0   1/1     Running   0          35m   10.244.1.31   k8snode1   <none>           <none>
 web1-1   0/1     Pending   0          35m   <none>        <none>     <none>           <none>
+```
 exec到web1-0容器内
+```shell
 [root@k8smaster volume]# kubectl exec -it  web1-0 -- /bin/bash
 root@web1-0:/# ls
 root@web1-0:/usr/share/nginx/html# echo "test" > index.html
+```
 查看k8snode1节点下/test-volume目录下的文件
+```shell
 [root@k8snode1 test-volume]# pwd
 /test-volume
 [root@k8snode1 test-volume]# cat index.html 
 test
-
+```
 ##### 3、 StatefulSet实现灰度发布
 StatefulSet在使用rollingUpdate滚动更新策略时，可以设置partition参数实现简单的灰度发布
 
 #配置如下
+```yaml
   updateStrategy: 
     rollingUpdate:  
       partition: 1      #表示在滚动更新时保留的pod编号，为1即表示保留小于1的pod不进行更新
     type: RollingUpdate 
-
+```
 #演示
+```shell
 kubectl set env sts/web test=1 zhang=1 test1=sss #更新
 get pod -l app=nginx-1 -w
 NAME    READY   STATUS    RESTARTS   AGE
@@ -250,7 +265,8 @@ web-1   1/1     Terminating         0          84s #更新web-1
 web-1   0/1     Pending             0          0s
 web-1   0/1     ContainerCreating   0          0s
 web-1   1/1     Running             0          2s
-#由于0小于1所以没有进行更新
+```
+由于0小于1所以没有进行更新
 
 使用ondelete更新策略也可以实现简单的灰度发布
 将更新策略设置为ondelete后，手动删除指定的pod,只要被手动删除的pod才会更新，没有执行删除操作的不会更新
@@ -259,10 +275,12 @@ web-1   1/1     Running             0          2s
 级联删除(默认)删除StatefulSet时同时删除pod，非级联删除删除StatefulSet时不会删除pod，此时的pod会变成孤儿pod，再次删除pod时pod不会被重建。
 
 #非级联删除
+```shell
 kubectl delete sts web --cascade=false
 statefulset.apps "web" deleted
+```
 --cascade=false  #关闭级联删除
-
+```shell
 [root@k8smaster statefulset]# kubectl get pods
 NAME                               READY   STATUS    RESTARTS   AGE
 web-0                              1/1     Running   0          6s
@@ -282,4 +300,4 @@ web-1                              1/1     Running   0          20s
 pod "web-0" deleted
 [root@k8smaster statefulset]# kubectl delete pods web-1
 pod "web-1" deleted
-
+```

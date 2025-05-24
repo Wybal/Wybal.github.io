@@ -64,14 +64,14 @@ kubectl get node master --show-labels
     matchExpressions - 通过设定键（key）、值列表和操作符（operator） 来构造的需求。合法的操作符有 In、NotIn、Exists 和 DoesNotExist。
 
 来自 matchLabels 和 matchExpressions 的所有需求都按逻辑与的方式组合在一起。 这些需求都必须被满足才被视为匹配
-
+```
 selector:
   matchLabels:
     component: redis
   matchExpressions:
     - { key: tier, operator: In, values: [cache] }
     - { key: environment, operator: Exists }
-
+```
 matchLabels 是由 {key,value} 对组成的映射。 matchLabels 映射中的单个 {key,value} 等同于 matchExpressions 的元素， 其 key 字段为 "key"，operator 为 "In"，而 values 数组仅包含 "value"。 matchExpressions 是 Pod 选择算符需求的列表。 有效的运算符包括 In、NotIn、Exists 和 DoesNotExist。 在 In 和 NotIn 的情况下，设置的值必须是非空的。 
 
 ##### 三、利用label查找资源
@@ -88,20 +88,22 @@ kubectl get可以打印资源列表，并且可以使用以下参数利用label�
 命令中的key区分大小写，输出的key列统一为大写。输出所有指定类型的资源，即使没有匹配到指定的key。并会输出指定的key列和对应的value，即使value为空也会显示为空
 
 匹配node，匹配一个key。HOSTNAME为指定的key，下面为对应的value
+```shell
 [root@master yaml]# kubectl get node -Lkubernetes.io/hostname
 NAME     STATUS   ROLES           AGE   VERSION   HOSTNAME
 master   Ready    control-plane   62d   v1.24.1   master
 node1    Ready    <none>          62d   v1.24.1   node1
 node2    Ready    control-plane   61d   v1.24.1   node2
-
+```
 匹配pod，匹配多个key。app和controller-revision-hash为key
+```shell
 [root@master yaml]# kubectl get pods -Lapp -Lcontroller-revision-hash -A 
 NAMESPACE      NAME                             READY   STATUS    RESTARTS        AGE    APP       CONTROLLER-REVISION-HASH
 dev1           webapp                           1/1     Running   0               58m    webapp    
 kube-flannel   kube-flannel-ds-d86gj            1/1     Running   12 (7h6m ago)   60d    flannel   5d454f6775
 kube-flannel   kube-flannel-ds-fglgm            1/1     Running   13 (7h6m ago)   60d    flannel   5d454f6775
 kube-flannel   kube-flannel-ds-w5tl5            1/1     Running   14 (7h6m ago)   60d    flannel   5d454f6775
-
+```
  
 ###### 2. -l: 匹配kv对(只输出匹配到kv的资源)
 >匹配一个kv对
@@ -120,40 +122,48 @@ kubectl get pods -l 'environment notin (production, qa)'
 kubectl get pods -l 'environment,environment notin (frontend)'
 
 查看labels
+```shell
 [root@master ~]# kubectl get node --show-labels 
 NAME     STATUS   ROLES           AGE    VERSION   LABELS
 master   Ready    control-plane   134d   v1.24.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,ingress=true,kubernetes.io/arch=amd64,kubernetes.io/hostname=master,kubernetes.io/os=linux,node-role.kubernetes.io/control-plane=,node.kubernetes.io/exclude-from-external-load-balancers=
 node1    Ready    <none>          134d   v1.24.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,ingress=true,kubernetes.io/arch=amd64,kubernetes.io/hostname=node1,kubernetes.io/os=linux,ssh=true,zone=beijing,gpu=true
 node2    Ready    <none>          126d   v1.24.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,gpu=true,kubernetes.io/arch=amd64,kubernetes.io/hostname=node2,kubernetes.io/os=linux,ssd=true,zone=xian
-
+```
 匹配key为zone，value为xian的label的node
+```shell
 [root@master ~]# kubectl get no -lzone=xian
 NAME    STATUS   ROLES    AGE    VERSION
 node2   Ready    <none>   126d   v1.24.1
-
+```
 匹配key不为zone,vaule不为xian的node
+```shell
 [root@master ~]# kubectl get no -l "zone notin (xian)"
 NAME     STATUS   ROLES           AGE    VERSION
 master   Ready    control-plane   134d   v1.24.1
 node1    Ready    <none>          134d   v1.24.1
+```
 master节点没有zone的label也被匹配到了
 
 匹配zone不等于xian，ssh等于xian的node
+```shell
 [root@master ~]# kubectl get no -l "zone notin (xian),ssh in (true)"
 NAME    STATUS   ROLES    AGE    VERSION
 node1   Ready    <none>   134d   v1.24.1
-
+```
 匹配gpu和ssh都为true的node
+```shell
 [root@master ~]# kubectl get no -l "gpu,ssh in (true)"
 NAME    STATUS   ROLES    AGE    VERSION
 node1   Ready    <none>   134d   v1.24.1
-
+```
 
 ###### 3. 即-L:匹配key，也-l:匹配kv
 当有l时，就只会输出匹配到l指定的kv对的资源，l指定的kv对不会在输出中打印，L指定的key会作为一列输出对应的value
+```shell
 [root@master ~]# kubectl get no -lzone=xian -Lgpu
 NAME    STATUS   ROLES    AGE    VERSION   GPU
 node2   Ready    <none>   126d   v1.24.1   
 [root@master ~]# kubectl get pods -lapp=webapp -Lcontroller-revision-hash -A 
 NAMESPACE   NAME     READY   STATUS    RESTARTS   AGE   CONTROLLER-REVISION-HASH
-dev1        webapp   1/1     Running   0          61m  
+dev1        webapp   1/1     Running   0          61m  \
+```

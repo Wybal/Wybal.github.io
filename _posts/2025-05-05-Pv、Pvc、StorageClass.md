@@ -10,7 +10,7 @@ toc: true
 PersistentVolume 卷的绑定是排他性的。 由于pvc是namespace作用域的对象，使用 "Many" 模式（ROX、RWX）来挂载申领的操作只能在同一namespace内进行。
 storageclass不是namespace作用域的对象，pv也不是namespace作用域的对象但是它会和namespace作用域的pvc进行绑定
 #### 一、PV
-```
+```yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -31,7 +31,7 @@ spec:
     server: 172.17.0.2
     readOnly: false
 ```
-```
+```yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -50,15 +50,16 @@ spec:
 ```
 ##### 1、pv的访问模式(accessModes)
 每个volume只能同时以一种访问模式挂载
-ReadWriteOnce(RWO)
+- ReadWriteOnce(RWO)
     卷可以被一个节点以读写方式挂载。 ReadWriteOnce 访问模式仍然可以在同一节点上运行的多个 Pod 访问该卷。 
-ReadOnlyMany(ROX)
+- ReadOnlyMany(ROX)
     卷可以被多个节点以只读方式挂载。
-ReadWriteMany(RWX)
+- ReadWriteMany(RWX)
     卷可以被多个节点以读写方式挂载。
-ReadWriteOncePod(RWOP)
+- ReadWriteOncePod(RWOP)
     特性状态： Kubernetes v1.29 [stable]
     卷可以被单个 Pod 以读写方式挂载。 如果你想确保整个集群中只有一个 Pod 可以读取或写入该 PVC， 请使用 ReadWriteOncePod 访问模式。
+
 ##### 2、pv的回收策略(persistentVolumeReclaimPolicy)
 数据卷可以被 Retained（保留）、Recycled（回收）或 Deleted（删除）。
 * 保留（Retain）
@@ -96,6 +97,7 @@ volumeMode 设置为 Block，以便将卷作为原始块设备来使用。 这�
 *   nfs
 *   rbd（于 v1.28 中弃用）
 *   vsphereVolume
+
 Kubernetes 不对挂载选项执行合法性检查。如果挂载选项是非法的，挂载就会失败。
 ##### 5、容量(capacity)
 定义 PV 的存储容量
@@ -109,17 +111,17 @@ Kubernetes 不对挂载选项执行合法性检查。如果挂载选项是非法
 每个 PV 卷可以通过设置节点亲和性来定义一些约束，进而限制从哪些节点上可以访问此卷。 使用这些卷的 Pod 只会被调度到节点亲和性规则所选择的节点上执行。 要设置节点亲和性，配置 PV 卷 .spec 中的 nodeAffinity
 
 ##### 9、pv的状态
-Available
+- Available
     卷是一个空闲资源，尚未绑定到任何pvc
-Bound
+- Bound
     该卷已经绑定到pvc
-Released
+- Released
     所绑定的pvc已被删除，但是关联存储资源尚未被集群回收
-Failed
+- Failed
     卷的自动回收操作失败
 
 #### 二、PVC
-```
+```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -138,7 +140,7 @@ spec:
     matchExpressions:
       - {key: environment, operator: In, values: [dev]}
 ```
-```
+```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -163,13 +165,13 @@ PVC 申领不必一定要请求某个类。如果 PVC 的 storageClassName 属�
 ##### 5、选择器(selector)
 目前，设置了非空 selector 的 PVC 对象无法让集群为其动态制备 PV 卷。
 pvc可以设置selector来进一步过滤pv，只有标签与选择算符相匹配的卷能够绑定到申领上。 选择算符包含两个字段：
-    matchLabels - 卷必须包含带有此值的标签
-    matchExpressions - 通过设定键（key）、值列表和操作符（operator） 来构造的需求。合法的操作符有 In、NotIn、Exists 和 DoesNotExist。
+-    matchLabels - 卷必须包含带有此值的标签
+-    matchExpressions - 通过设定键（key）、值列表和操作符（operator） 来构造的需求。合法的操作符有 In、NotIn、Exists 和 DoesNotExist。
 
 来自 matchLabels 和 matchExpressions 的所有需求都按逻辑与的方式组合在一起。 这些需求都必须被满足才被视为匹配。
 
 #### 三、pod使用pvc
-```
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -186,7 +188,7 @@ spec:
       persistentVolumeClaim:
         claimName: myclaim
 ```
-```
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -208,7 +210,7 @@ spec:
 
 #### 四、storageclass
 当没有对应的storageclass，pv和pvc指定的storageclass相同，俩者就会绑定
-```
+```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -224,8 +226,8 @@ volumeBindingMode: Immediate
 ```
 ##### 1、回收策略(reclaimPolicy)
 
-  Delete 删除，默认策略
-  Retain 保留
+-  Delete 删除，默认策略
+-  Retain 保留
 通过storageclass创建并管理的pv会使用storageclass指定的回收策略
 ##### 2、挂载选项(mountOptions)
 有storageclass创建的pv被挂载在节点上使用的附加挂载选项
@@ -233,9 +235,9 @@ Kubernetes 不对挂载选项执行合法性检查。如果挂载选项是非法
 ##### 3、卷绑定模式(volumeBindingMode)
 volumeBindingMode指定了卷绑定和动态制备发生在什么时候
 
-  Immediate 默认模式，创建了pvc就完成了pv的创建和绑定，即使pod没有创建
-  WaitForFirstConsumer 延迟pvc和pv的创建和绑定，直到pod的创建。只有Local 插件支持，如果pod使用此策略的storageclass，不能使用节点亲和性会导致pvc pending。可以使用nodeSelecter
-```
+-  Immediate 默认模式，创建了pvc就完成了pv的创建和绑定，即使pod没有创建
+-  WaitForFirstConsumer 延迟pvc和pv的创建和绑定，直到pod的创建。只有Local 插件支持，如果pod使用此策略的storageclass，不能使用节点亲和性会导致pvc pending。可以使用nodeSelecter
+```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -253,7 +255,7 @@ Portworx	1.11
 FlexVolume	1.13
 CSI	1.14 (alpha), 1.16 (beta)
 ##### 5、选项参数(parameters)
-```
+```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -285,7 +287,7 @@ mountOptions:
   - hard                                                  ## 指定为硬挂载方式
   - nfsvers=4                                             ## 指定NFS版本,这个需要根据NFS Server版本号设置
 ```
-```
+```shell
 [root@master yaml]# kubectl get sc
 NAME                    PROVISIONER   RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
 nfs-storage (default)   nfs-client    Delete          Immediate           false                  18h
@@ -294,7 +296,7 @@ nfs-storage (default)   nfs-client    Delete          Immediate           false 
 PV描述的是持久化存储数据卷，这个 API 对象主要定义的是一个持久化存储在宿主机上的目录，比如一个 NFS 的挂载目录。
 PVC描述的是pod所希望的持久化存储的属性，比如，volume存储的大小，可读权限等
 定义一个NFS类型的PV，
-```
+```yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -310,7 +312,7 @@ spec:
     path: "/"
 ```
 声明一个1G大小的PVC
-```
+```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -328,7 +330,7 @@ spec:
 2、而第二个条件，则是 PV 和 PVC 的 storageClassName 字段必须一样。
 PV和PVC是一对一的关系
 pod使用上面声明的PVC
-```
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -356,7 +358,7 @@ PVC和PV的设计，其实和“面向对象”的思想完全一致，PVC是持
 这个Contruller维护着多个控制循环，其中一个循环，扮演的就是撮合 PV 和 PVC 的“红娘”的角色。它的名字叫作 PersistentVolumeController
 PersistentVolumeController 会不断地查看当前每一个 PVC，是不是已经处于 Bound（已绑定）状态。如果不是，那它就会遍历所有的、可用的 PV，并尝试将其与这个“单身”的 PVC 进行绑定。这样，Kubernetes 就可以保证用户提交的每一个 PVC，只要有合适的 PV 出现，它就能够很快进入绑定状态
 所谓将一个 PV 与 PVC 进行“绑定”，其实就是将这个 PV 对象的名字，填在了 PVC 对象的 spec.volumeName 字段上。
-```
+```shell
 [root@k8smaster volume]# kubectl get pv
 NAME      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                STORAGECLASS   REASON   AGE
 pv-test   3Gi        RWX            Recycle          Bound    default/www-web1-0   manual                  2d1
@@ -368,18 +370,18 @@ NAME         STATUS    VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   AGE
 www-web1-0   Bound     pv-test   1Gi        RWX            manual         2d19h
 ```
 在这个www-web1-0的pvc的yaml配置信息里可以看到volumename的字段就是pv-test
-```
+```shell
 [root@k8smaster volume]# kubectl get pvc www-web1-0  -o yaml | grep -i  volumename
   volumeName: pv-test
 ```
 持久化 Volume 的实现，往往依赖于一个远程存储服务，比如：远程文件存储（比如，NFS、GlusterFS）、远程块存储（比如，公有云提供的远程磁盘）等等。
 而 Kubernetes 需要做的工作，就是使用这些存储服务，来为容器准备一个持久化的宿主机目录，以供将来进行绑定挂载时使用。而所谓“持久化”，指的是容器在这个目录里写入的文件，都会保存在远程存储中，从而使得这个目录具备了“持久性”。
 这个准备“持久化”宿主机目录的过程，我们可以形象地称为“两阶段处理”
-1、“第一阶段”（Attach），
+1. “第一阶段”（Attach），
 由volume controller负责维护，控制循环的名字叫AttachDetachController。作用就是不断的检查每一个pod对应的pv，和这个pod所在宿主机之间的挂载情况，从而决定是否对这个PV进行Attach或Dettach操作。
 volume控制器是kube-controller-manager的一部分，所以一定是运行在master节点上。
 Kubernetes 提供的可用参数是 nodeName，即宿主机的名字
-2、而对于“第二阶段”（Mount）；
+2. 而对于“第二阶段”（Mount）；
 第二阶段的mount或者umount操作，必须发生在pod对应的宿主机上，所以它是kubelet组件的一部分，这个控制循环的名字，叫VolumeManagerReconciler，运行起来后是一个独立于kubelet的goroutime
 Kubernetes 提供的可用参数是 dir，即 Volume 的宿主机目录
 
@@ -395,7 +397,7 @@ StorageClass 对象的作用，其实就是创建 PV 的模板。
 第二，创建这种 PV 需要用到的存储插件。比如，Ceph 等等。
 有了着两个就可以根据用户提交的PVC找到对应的StorageClass，然后调用storageclass声明的存储插件，创建PV
 使用ROOK存储服务的话，storageclass使用如下的yml文件定义
-
+```yaml
 apiVersion: ceph.rook.io/v1beta1
 kind: Pool
 metadata:
@@ -414,12 +416,13 @@ parameters:
   pool: replicapool
   #The value of "clusterNamespace" MUST be the same as the one in which your rook cluster exist
   clusterNamespace: rook-ceph
-
+```
 定义了一个block-service的storageclass，存储插件是rook-ceph
 创建这个storageclas
-$ kubectl create -f sc.yaml
+kubectl create -f sc.yaml
 开发者，只需要在PVC指定storageclass名字即可
 
+```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -431,7 +434,7 @@ spec:
   resources:
     requests:
       storage: 30Gi
-
+```
 
 在这个PVC里添加了一个storageclassname的字段:block-service
 当我们通过 kubectl create 创建上述 PVC 对象之后，Kubernetes 就会调用ROOK-ceph 的 API，创建出一块Persistent Disk。然后，再使用这个 Persistent Disk 的信息，自动创建出一个对应的 PV 对象。

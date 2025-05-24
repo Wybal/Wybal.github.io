@@ -67,7 +67,6 @@ k8smaster   Ready    master   20d   v1.15.0   beta.kubernetes.io/arch=amd64,beta
 ```
 指定pod运行在携带cm=test labels的node上
 ```shell
-[root@k8smaster nodeSelector]# cat nodeSe-pod.yml 
 apiVersion: v1
 kind: Pod
 metadata:
@@ -253,7 +252,6 @@ k8snode1   Ready    <none>   21d   v1.15.0   beta.kubernetes.io/arch=amd64,beta.
 ```
 创建Deployment，容忍污点key: "ssd"的所有污点，并且指定运行在有ssh: "true" 标签的node上
 ```yaml
-[root@k8smaster tolerations]# cat toleration-pod.yml 
 apiVersion: apps/v1    
 kind: Deployment
 metadata:
@@ -306,6 +304,8 @@ taint-deploy-f4648d77f-qhr8c   1/1     Terminating         0          2m2s    10
 -    NodeAffinity:节点亲和力/反亲和力
 -    PodAffinity:Pod亲和力
 -    PodAntiAffinity:Pod反亲和力
+
+
 ###### 1.nodeAffinity
 节点亲和性概念上类似于 nodeSelector， 它使你可以根据节点上的标签来约束 Pod 可以调度到哪些节点上。 节点亲和性有两种：
    
@@ -340,6 +340,8 @@ $ kubectl explain pod.spec.affinity.nodeAffinity
 ```
 
 - 例子1
+
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -405,6 +407,8 @@ nodeaffinity-pod   0/1     ContainerCreating   0          3m49s   <none>   node2
 ```
 
 - 例子2
+
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -515,6 +519,8 @@ topologyKey指定label的key必须有节点存在，如果集群内没有节点�
 ```
 
 - 示例1
+
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -575,8 +581,9 @@ podaffinity-required-pod   1/1     Running   0              13m   10.244.1.6    
 如果删除已调度的pod，再重新创建，pod也会一直处于pending状态
 
 - 例子2
+
+
 ```yaml
-cat podaffinity-deploy.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -649,7 +656,6 @@ Events:
 ###### 3. Pod 反亲和性（podAntiAffinity）
 为了保证分布式，让deployment的pod运行在不同的节点上，反亲和pod本身的label
 ```yaml
-cat podAntiAffinity-deploy.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
