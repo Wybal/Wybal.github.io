@@ -197,7 +197,7 @@ b） 确定从客户端执行的文件操作不断失败并出现输入/输出�
 ###### 3、确定正确的副本
 
 这是通过观察文件的 afr 更改日志扩展属性来完成的 使用 getfattr 命令的brick;然后确定裂脑的类型 （数据裂脑、元数据裂脑、条目裂脑或裂脑由于 GFID-不匹配）;最后确定哪个brick包含“好副本” 的文件。
-也可能一个砖可能包含正确的数据，而 其他可能包含正确的元数据。getfattr -d -m . -e hex \<file-path-on-brick\>
+也可能一个brick可能包含正确的数据，而 其他可能包含正确的元数据。getfattr -d -m . -e hex \<file-path-on-brick\>
 
     0x 000003d7 00000001 00000000
             |      |       |
@@ -749,7 +749,7 @@ replica.split-brain-status="The file is not under data or metadata split-brain"
 
 ##### 1、从client解决数据和元数据脑裂
 
-尝试在挂载点上对脑裂的文件进行操作（例如 cat、getfattr 等），会出现输入/输出错误。为了使用户能够分析此类文件，提供了一个 setfattr 命令。
+尝试在挂载点上对脑裂的文件进行操作（例如 cat、getfattr 等），会出现Input/output error。为了使用户能够分析此类文件，提供了一个 setfattr 命令。
 ```
 # setfattr -n replica.split-brain-choice -v "choiceX" <path-to-file>
 ```

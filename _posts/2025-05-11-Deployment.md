@@ -52,14 +52,14 @@ NAME     READY  UP-TO-DATE  AVAILABLE   AGE    CONTAINERS     IMAGES            
 nginx-1  1/1    1           1           7m39s  nginx          10.122.6.81:5000/image/nginx:v1      app=nginx-1
 ```
 
-    NAME：      Deployment名称
-    READY：     Pod的状态，已经Ready的个数
-    UP-TO-DATE：已经达到期望状态的被更新的副本数
-    AVAILABLE： 已经可以用的副本数
-    AGE：       显示应用程序运行的时间
-    CONTAINERS：容器名称
-    IMAGES：    容器的镜像
-    SELECTOR：  管理的Pod的标签
+NAME：      Deployment名称
+READY：     Pod的状态，已经Ready的个数
+UP-TO-DATE：已经达到期望状态的被更新的副本数
+AVAILABLE： 已经可以用的副本数
+AGE：       显示应用程序运行的时间
+CONTAINERS：容器名称
+IMAGES：    容器的镜像
+SELECTOR：  管理的Pod的标签
     
 ###### 1、deployment的水平扩展
 把副本数改为2，原本为3，改为4个副本只需要将2改为4
