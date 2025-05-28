@@ -7,8 +7,9 @@ toc: true
 ---
 
 **关于namespace**
-PersistentVolume 卷的绑定是排他性的。 由于pvc是namespace作用域的对象，使用 "Many" 模式（ROX、RWX）来挂载申领的操作只能在同一namespace内进行。
-storageclass不是namespace作用域的对象，pv也不是namespace作用域的对象但是它会和namespace作用域的pvc进行绑定
+PV 卷的绑定是排他性的，pv不是namespace作用域的对象但是它会和namespace作用域的pvc进行绑定
+pvc是namespace作用域的对象，使用 "Many" 模式（ROX、RWX）来挂载申领的操作只能在同一namespace内进行。
+storageclass不是namespace作用域的对象。
 #### 一、PV
 ```yaml
 apiVersion: v1
@@ -21,7 +22,7 @@ spec:
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Recycle
+  persistentVolumeReclaimPolicy: Delete
   storageClassName: slow
   mountOptions:
     - hard
@@ -228,6 +229,7 @@ volumeBindingMode: Immediate
 
 -  Delete 删除，默认策略
 -  Retain 保留
+
 通过storageclass创建并管理的pv会使用storageclass指定的回收策略
 ##### 2、挂载选项(mountOptions)
 有storageclass创建的pv被挂载在节点上使用的附加挂载选项
@@ -237,6 +239,7 @@ volumeBindingMode指定了卷绑定和动态制备发生在什么时候
 
 -  Immediate 默认模式，创建了pvc就完成了pv的创建和绑定，即使pod没有创建
 -  WaitForFirstConsumer 延迟pvc和pv的创建和绑定，直到pod的创建。只有Local 插件支持，如果pod使用此策略的storageclass，不能使用节点亲和性会导致pvc pending。可以使用nodeSelecter
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -274,7 +277,6 @@ parameters:
 当集群中存在默认的 StorageClass 并且用户创建了一个未指定 storageClassName 的 PersistentVolumeClaim 时， DefaultStorageClass 准入控制器会自动向其中添加指向默认存储类的 storageClassName 字段。
 在集群的多个 StorageClass 设置 storageclass.kubernetes.io/is-default-class 注解为 true， 并之后创建了未指定 storageClassName 的 PersistentVolumeClaim， Kubernetes 会使用最新创建的默认 StorageClass。
 ```yaml
-[root@master yaml]# cat nfs-storage.yaml 
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -451,3 +453,147 @@ StorageClass 的另一个重要作用，是指定 PV 的 Provisioner（存储插
 第一阶段由运行在master上的AttachDetachController负责，为这个PV完成 Attach 操作，为宿主机挂载远程磁盘；
 第二阶段是运行在每个节点上kubelet组件的内部，把第一步attach的远程磁盘 mount 到宿主机目录。这个控制循环叫VolumeManagerReconciler，运行在独立的Goroutine，不会阻塞kubelet主循环。
 完成这两步，PV对应的“持久化 Volume”就准备好了，POD可以正常启动，将“持久化 Volume”挂载在容器内指定的路径。
+
+#### 五、使用nfs创建动态存储卷
+##### 1、安装nfs-server
+
+##### 2、获取nfs subdir external provisioner文件
+
+##### 3、安装授权
+```shell
+# Set the subject of the RBAC objects to the current namespace where the provisioner is being deployed
+$ NS=$(kubectl config get-contexts|grep -e "^\*" |awk '{print $5}')
+$ NAMESPACE=${NS:-default}
+$ sed -i'' "s/namespace:.*/namespace: $NAMESPACE/g" ./deploy/rbac.yaml ./deploy/deployment.yaml
+$ kubectl create -f deploy/rbac.yaml
+```
+##### 4、配置nfs subdir external provisioner
+
+```yaml
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: nfs-client-provisioner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nfs-client-provisioner
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: nfs-client-provisioner
+    spec:
+      serviceAccountName: nfs-client-provisioner
+      containers:
+        - name: nfs-client-provisioner
+          image: registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2 #镜像地址需要修改为国内
+          volumeMounts:
+            - name: nfs-client-root
+              mountPath: /persistentvolumes
+          env:
+            - name: PROVISIONER_NAME
+              value: k8s-sigs.io/nfs-subdir-external-provisioner                    #PROVISIONER_NAME可以自定义，StorageClass的provisioner需要和这保持一致
+            - name: NFS_SERVER
+              value: <YOUR NFS SERVER HOSTNAME>                                     #更改为nfs_server的地址
+            - name: NFS_PATH
+              value: /var/nfs                                                       #更改为共享目录
+      volumes:
+        - name: nfs-client-root
+          nfs:
+            server: <YOUR NFS SERVER HOSTNAME>                                      #更改为nfs_server的地址
+            path: /var/nfs                                                          #更改为共享目录
+```
+##### 5、设置storage class
+
+parameters
+
+| Name            |                                                                                                                                        Description                                                                                                                                         |                                                         Default |
+| --------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | --------------------------------------------------------------: |
+| onDelete        |                                                                                    If it exists and has a delete value, delete the directory, if it exists and has a retain value, save the directory.                                                                                     | will be archived with name on the share: archived-<volume.Name> |
+| archiveOnDelete |                                                                                       If it exists and has a false value, delete the directory. if onDelete exists, archiveOnDelete will be ignored.                                                                                       | will be archived with name on the share: archived-<volume.Name> |
+| pathPattern     | Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace. To specify metadata use \${.PVC.<metadata>}. Example: If folder should be named like <pvc-namespace>-<pvc-name>, use \${.PVC.namespace}-${.PVC.name} as pathPattern. |                                                             n/a |
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-client
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"  ## 是否设置为默认的storageclass
+provisioner: k8s-sigs.io/nfs-subdir-external-provisioner #和PROVISIONER_NAME保持一致
+parameters:
+  pathPattern: "${.PVC.namespace}/${.PVC.annotations.nfs.io/storage-path}" # waits for nfs.io/storage-path annotation, if not specified will accept as empty string.
+  onDelete: delete
+mountOptions:
+  - hard                                                  ## 指定为硬挂载方式
+  - nfsvers=4                                             ## 指定NFS版本,这个需要根据NFS Server版本号设置
+```
+##### 6、检查环境
+kubectl create -f deploy/test-claim.yaml -f deploy/test-pod.yaml
+
+kubectl delete -f deploy/test-pod.yaml -f deploy/test-claim.yaml
+检查nfs server的共享目录下是否有.SUCCESS
+##### 7、设置自己的pvc
+
+```yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-claim
+  annotations:
+    nfs.io/storage-path: "test-path" # not required, depending on whether this annotation was shown in the storage class description
+spec:
+  storageClassName: nfs-client
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Mi
+```
+
+##### 8、测试pod
+检查nfs server的共享目录下是否有.SUCCESS，目录为namespace-pvcname-pvname
+[root@master provisioner-nginx-pvc-pvc-259cef36-4d60-407f-93ec-b828c5444bbc]# ls
+SUCCESS
+[root@master provisioner-nginx-pvc-pvc-259cef36-4d60-407f-93ec-b828c5444bbc]# pwd
+/nfs/provisioner-nginx-pvc-pvc-259cef36-4d60-407f-93ec-b828c5444bbc
+```yaml
+kind: Pod
+apiVersion: v1
+metadata:
+  name: test-pod
+  namespace: provisioner
+spec:
+  containers:
+  - name: test-pod
+    image: busybox:stable
+    command:
+      - "/bin/sh"
+    args:
+      - "-c"
+      - "touch /mnt/SUCCESS && exit 0 || exit 1"
+    volumeMounts:
+      - name: nfs-pvc
+        mountPath: "/mnt"
+  restartPolicy: "Never"
+  volumes:
+    - name: nfs-pvc
+      persistentVolumeClaim:
+        claimName: nginx-pvc
+```
+df -h查看大小还是为5G，pvc只给了200M，这里df查看的大小和pvc的申领的容量无关
+```shell
+[root@master yaml]# kubectl get pvc -A
+NAMESPACE     NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+dev1          nfs-pvc1    Bound    nfs-pv1                                    1Gi        RWO                           8h
+provisioner   nginx-pvc   Bound    pvc-259cef36-4d60-407f-93ec-b828c5444bbc   200Mi      RWX            nfs-storage    4h43m
+[root@master yaml]# kubectl -n provisioner exec -it test-pod -- df -h
+Filesystem                Size      Used Available Use% Mounted on
+overlay                  17.0G      3.3G     13.7G  19% /
+tmpfs                    64.0M         0     64.0M   0% /dev
+tmpfs                   909.7M         0    909.7M   0% /sys/fs/cgroup
+192.168.189.200:/nfs/provisioner-nginx-pvc-pvc-259cef36-4d60-407f-93ec-b828c5444bbc
+                          5.0G     32.0M      5.0G   1% /mnt
+```
