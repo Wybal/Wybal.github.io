@@ -389,63 +389,6 @@ Kubernetes 提供的可用参数是 dir，即 Volume 的宿主机目录
 
 删除一个PV时，k8s需要umount和dettch两个阶段，执行反向操作即可
 
-二、StorageClass
-在大规模集群中PVC数量很多，如果手动创建PV，耗时耗力
-k8s提供了一套可以自动创建PV的机制，即：Dynamic Provisioning。
-人工管理 PV 的方式就叫作 Static Provisioning
-Dynamic Provisioning 机制工作的核心，在于一个名叫 StorageClass 的 API 对象。
-StorageClass 对象的作用，其实就是创建 PV 的模板。
-第一，PV 的属性。比如，存储类型、Volume 的大小等等。
-第二，创建这种 PV 需要用到的存储插件。比如，Ceph 等等。
-有了着两个就可以根据用户提交的PVC找到对应的StorageClass，然后调用storageclass声明的存储插件，创建PV
-使用ROOK存储服务的话，storageclass使用如下的yml文件定义
-```yaml
-apiVersion: ceph.rook.io/v1beta1
-kind: Pool
-metadata:
-  name: replicapool
-  namespace: rook-ceph
-spec:
-  replicated:
-    size: 3
----
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: block-service
-provisioner: ceph.rook.io/block
-parameters:
-  pool: replicapool
-  #The value of "clusterNamespace" MUST be the same as the one in which your rook cluster exist
-  clusterNamespace: rook-ceph
-```
-定义了一个block-service的storageclass，存储插件是rook-ceph
-创建这个storageclas
-kubectl create -f sc.yaml
-开发者，只需要在PVC指定storageclass名字即可
-
-```yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: claim1
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: block-service
-  resources:
-    requests:
-      storage: 30Gi
-```
-
-在这个PVC里添加了一个storageclassname的字段:block-service
-当我们通过 kubectl create 创建上述 PVC 对象之后，Kubernetes 就会调用ROOK-ceph 的 API，创建出一块Persistent Disk。然后，再使用这个 Persistent Disk 的信息，自动创建出一个对应的 PV 对象。
-
-PVC 描述的，是 Pod 想要使用的持久化存储的属性，比如存储的大小、读写权限等。
-PV 描述的，则是一个具体的 Volume 的属性，比如 Volume 的类型、挂载目录、远程存储服务器地址等。
-而 StorageClass 的作用，则是充当 PV 的模板。并且，只有同属于一个 StorageClass 的 PV 和 PVC，才可以绑定在一起。
-StorageClass 的另一个重要作用，是指定 PV 的 Provisioner（存储插件）。这时候，如果你的存储插件支持 Dynamic Provisioning 的话，Kubernetes 就可以自动为你创建 PV 了。
-
 总结：
 用户提交请求创建pod，Kubernetes发现这个pod声明使用了PVC，那就靠PersistentVolumeController帮它找一个PV配对。
 没有现成的PV，就去找对应的StorageClass，帮它新创建一个PV，然后和PVC完成绑定。
@@ -507,14 +450,6 @@ spec:
             path: /var/nfs                                                          #更改为共享目录
 ```
 ##### 5、设置storage class
-
-parameters
-
-| Name            |                                                                                                                                        Description                                                                                                                                         |                                                         Default |
-| --------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | --------------------------------------------------------------: |
-| onDelete        |                                                                                    If it exists and has a delete value, delete the directory, if it exists and has a retain value, save the directory.                                                                                     | will be archived with name on the share: archived-<volume.Name> |
-| archiveOnDelete |                                                                                       If it exists and has a false value, delete the directory. if onDelete exists, archiveOnDelete will be ignored.                                                                                       | will be archived with name on the share: archived-<volume.Name> |
-| pathPattern     | Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace. To specify metadata use \${.PVC.<metadata>}. Example: If folder should be named like <pvc-namespace>-<pvc-name>, use \${.PVC.namespace}-${.PVC.name} as pathPattern. |                                                             n/a |
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -522,7 +457,7 @@ metadata:
   name: nfs-client
   annotations:
     storageclass.kubernetes.io/is-default-class: "false"  ## 是否设置为默认的storageclass
-provisioner: k8s-sigs.io/nfs-subdir-external-provisioner #和PROVISIONER_NAME保持一致
+provisioner: k8s-sigs.io/nfs-subdir-external-provisioner  #和PROVISIONER_NAME保持一致
 parameters:
   pathPattern: "${.PVC.namespace}/${.PVC.annotations.nfs.io/storage-path}" # waits for nfs.io/storage-path annotation, if not specified will accept as empty string.
   onDelete: delete

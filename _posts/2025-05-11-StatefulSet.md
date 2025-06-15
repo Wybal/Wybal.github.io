@@ -34,7 +34,7 @@ spec:
 这个sevice所代理的pod依然是Label selector机制选择出来的，即所有app=nginx标签的pod，都会被这个service代理起来
 你按照这样的方式创建了一个 Headless Service 之后，它所代理的所有 Pod 的 IP 地址，都会被绑定一个这样格式的 DNS 记录，如下所示：
 <pod-name>.<svc-name>.<namespace>.svc.cluster.local
-这个dns正是k8s为pod分配的唯一的”可解析身份“
+这个dns正是k8s为pod分配的唯一的可解析身份
 
 ```yaml
 apiVersion: apps/v1         #必须，api版本
